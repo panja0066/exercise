@@ -798,7 +798,25 @@
                     await webcam.play();
                     
                     document.getElementById('webcam-container').innerHTML = '';
+                    
+                    // Render canvas to the display area
+                    webcam.canvas.className = "w-full h-full object-cover rounded-xl";
                     document.getElementById('webcam-container').appendChild(webcam.canvas);
+                    
+                    // CRITICAL FIX FOR WEBCAM FREEZE:
+                    // Modern browsers (iOS, Chrome, Safari) require the active <video> element to be 
+                    // explicitly appended to the DOM, muted, and configured with playsinline.
+                    // If it is kept detached, the browser pauses/suspends the track, freezing the canvas!
+                    if (webcam.webcam) {
+                        webcam.webcam.setAttribute('playsinline', 'true');
+                        webcam.webcam.setAttribute('muted', 'true');
+                        webcam.webcam.style.position = 'absolute';
+                        webcam.webcam.style.width = '1px';
+                        webcam.webcam.style.height = '1px';
+                        webcam.webcam.style.opacity = '0.01';
+                        webcam.webcam.style.pointerEvents = 'none';
+                        document.getElementById('webcam-container').appendChild(webcam.webcam);
+                    }
                     
                     aiOverlay.classList.remove('hidden');
                     btn.className = "text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1 px-2.5 rounded transition flex items-center gap-1";
@@ -821,8 +839,12 @@
         async function predictLoop() {
             if (!isWebcamActive) return;
             
-            webcam.update(); // Update webcam image
-            await predict();
+            try {
+                webcam.update(); // Update webcam image onto canvas
+                await predict();
+            } catch (err) {
+                console.warn("Prediction loop skipped frame: ", err);
+            }
             
             predictionFrameId = requestAnimationFrame(predictLoop);
         }
@@ -831,46 +853,24 @@
         async function predict() {
             if (!model) return;
             
-            const prediction = await model.predict(webcam.canvas);
-            
-            // Build key map for faster evaluation dictionary references
-            prediction.forEach((pred) => {
-                const label = pred.className;
-                const prob = pred.probability;
-                predictionsDict[label] = prob;
+            try {
+                const prediction = await model.predict(webcam.canvas);
                 
-                // Update graph representations
-                updateProbabilityBar(label, prob);
-            });
-        }
-
-        // Render graphical bar updates
-        function updateProbabilityBar(className, probability) {
-            const barId = `prob-bar-${className.replace(/\s+/g, '_')}`;
-            const valId = `prob-val-${className.replace(/\s+/g, '_')}`;
-            
-            const bar = document.getElementById(barId);
-            const val = document.getElementById(valId);
-            
-            if (bar && val) {
-                const pct = (probability * 100).toFixed(1);
-                bar.style.width = `${pct}%`;
-                val.innerText = `${pct}%`;
-                
-                // Switch styling of active target high match probabilities
-                if (probability >= 0.8) {
-                    bar.className = "bg-green-500 h-full w-0 transition-all duration-75";
-                    val.className = "font-mono text-[10px] text-green-400 font-bold";
-                } else if (probability >= 0.4) {
-                    bar.className = "bg-indigo-500 h-full w-0 transition-all duration-75";
-                    val.className = "font-mono text-[10px] text-indigo-300";
-                } else {
-                    bar.className = "bg-slate-700 h-full w-0 transition-all duration-75";
-                    val.className = "font-mono text-[10px] text-slate-500";
-                }
+                // Build key map for faster evaluation dictionary references
+                prediction.forEach((pred) => {
+                    const label = pred.className;
+                    const prob = pred.probability;
+                    predictionsDict[label] = prob;
+                    
+                    // Update graph representations
+                    updateProbabilityBar(label, prob);
+                });
+            } catch (err) {
+                console.error("Prediction inference error: ", err);
             }
         }
 
+        // Run action initiation script
         // Play action initiation script
         function startGameSession() {
             if (!isWebcamActive) {
