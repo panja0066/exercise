@@ -1,0 +1,462 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>스마트 약 복용 알리미</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      color: #0f172a;
+    }
+
+    .phone {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .menu {
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+      border-radius: 24px;
+      position: sticky;
+      top: 10px;
+      z-index: 10;
+    }
+
+    .menu h1 {
+      text-align: center;
+      margin-bottom: 18px;
+      font-size: 24px;
+    }
+
+    .menu-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .menu-buttons button {
+      border: none;
+      border-radius: 16px;
+      padding: 10px;
+      background: #334155;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .menu-buttons button.active {
+      background: white;
+      color: #0f172a;
+    }
+
+    .section {
+      background: white;
+      padding: 20px;
+      border-radius: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    h2 {
+      margin-bottom: 18px;
+      font-size: 24px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
+      font-size: 14px;
+    }
+
+    .main-button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 18px;
+      background: #0f172a;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .card {
+      border: 1px solid #e2e8f0;
+      border-radius: 22px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      background: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .time-box {
+      background: #f1f5f9;
+      padding: 12px;
+      border-radius: 18px;
+    }
+
+    .time-box p:first-child {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 5px;
+    }
+
+    .time-box p:last-child {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .alert-button {
+      width: 100%;
+      border: none;
+      background: #10b981;
+      color: white;
+      padding: 14px;
+      border-radius: 18px;
+      margin-top: 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .symptoms {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .symptoms button {
+      border: none;
+      background: #e2e8f0;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .recommend-box {
+      background: #f1f5f9;
+      padding: 16px;
+      border-radius: 20px;
+      margin-top: 18px;
+      line-height: 1.7;
+    }
+
+    .pharmacy-button {
+      width: 100%;
+      border: none;
+      background: #3b82f6;
+      color: white;
+      padding: 14px;
+      border-radius: 18px;
+      margin-top: 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .empty {
+      background: #f1f5f9;
+      padding: 16px;
+      border-radius: 18px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+
+    <div class="menu">
+      <h1>스마트 약 복용 알리미</h1>
+
+      <div class="menu-buttons">
+        <button class="active" onclick="showMenu('info', this)">정보</button>
+        <button onclick="showMenu('schedule', this)">스케줄</button>
+        <button onclick="showMenu('medicine', this)">약찾기</button>
+        <button onclick="showMenu('pharmacy', this)">약국</button>
+      </div>
+    </div>
+
+    <div id="info" class="section active">
+      <h2>사용자 정보</h2>
+
+      <div class="input-group">
+        <label>나이</label>
+        <input type="number" id="age" placeholder="예: 17" />
+      </div>
+
+      <div class="input-group">
+        <label>몸무게</label>
+        <input type="number" id="weight" placeholder="예: 58" />
+      </div>
+
+      <div class="input-group">
+        <label>복용 횟수</label>
+
+        <select>
+          <option>하루 1번</option>
+          <option>하루 2번</option>
+          <option>하루 3번</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="schedule" class="section">
+      <h2>복용 스케줄</h2>
+
+      <div class="input-group">
+        <label>약 이름</label>
+        <input type="text" id="medicineName" placeholder="예: 감기약" />
+      </div>
+
+      <div class="input-group">
+        <label>복용 시간</label>
+        <input type="time" id="medicineTime" />
+      </div>
+
+      <div class="input-group">
+        <label>식사 시간</label>
+        <input type="time" id="mealTime" />
+      </div>
+
+      <button class="main-button" onclick="addMedication()">
+        + 약 추가
+      </button>
+
+      <div id="medicationList" style="margin-top: 20px;">
+        <div class="empty">
+          아직 추가된 약이 없습니다.<br>
+          인간은 입력하기 전까지 데이터를 잃어버린 존재다.
+        </div>
+      </div>
+    </div>
+
+    <div id="medicine" class="section">
+      <h2>증상으로 약 찾기</h2>
+
+      <div class="symptoms">
+        <button onclick="recommendMedicine('두통')">두통</button>
+        <button onclick="recommendMedicine('기침')">기침</button>
+        <button onclick="recommendMedicine('감기')">감기</button>
+        <button onclick="recommendMedicine('복통')">복통</button>
+        <button onclick="recommendMedicine('알레르기')">알레르기</button>
+      </div>
+
+      <div class="recommend-box" id="recommendBox">
+        증상을 선택하면 나이와 몸무게 기반으로 추천 약이 표시됩니다.
+      </div>
+    </div>
+
+    <div id="pharmacy" class="section">
+      <h2>주변 약국</h2>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>행복약국</h3>
+          <span>450m</span>
+        </div>
+
+        <p>운영시간: 24시간 운영</p>
+
+        <button class="pharmacy-button">
+          길찾기
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>중앙약국</h3>
+          <span>1.2km</span>
+        </div>
+
+        <p>운영시간: 09:00 ~ 21:00</p>
+
+        <button class="pharmacy-button">
+          길찾기
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showMenu(menuId, buttonElement) {
+      const sections = document.querySelectorAll('.section');
+      sections.forEach(section => {
+        section.classList.remove('active');
+      });
+
+      document.getElementById(menuId).classList.add('active');
+
+      const buttons = document.querySelectorAll('.menu-buttons button');
+      buttons.forEach(button => {
+        button.classList.remove('active');
+      });
+
+      buttonElement.classList.add('active');
+    }
+
+    function addMedication() {
+      const medicineName = document.getElementById('medicineName').value;
+      const medicineTime = document.getElementById('medicineTime').value;
+      const mealTime = document.getElementById('mealTime').value;
+
+      if (!medicineName || !medicineTime || !mealTime) {
+        alert('모든 정보를 입력해주세요.');
+        return;
+      }
+
+      const medicationList = document.getElementById('medicationList');
+
+      if (medicationList.innerHTML.includes('아직 추가된 약이 없습니다')) {
+        medicationList.innerHTML = '';
+      }
+
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      card.innerHTML = `
+        <div class="card-header">
+          <h3>${medicineName}</h3>
+          <span class="badge">1정</span>
+        </div>
+
+        <div class="time-grid">
+          <div class="time-box">
+            <p>복용 시간</p>
+            <p>${medicineTime}</p>
+          </div>
+
+          <div class="time-box">
+            <p>식사 시간</p>
+            <p>${mealTime}</p>
+          </div>
+        </div>
+
+        <button class="alert-button" onclick="setAlert('${medicineName}', '${medicineTime}')">
+          알림 설정
+        </button>
+      `;
+
+      medicationList.appendChild(card);
+
+      document.getElementById('medicineName').value = '';
+      document.getElementById('medicineTime').value = '';
+      document.getElementById('mealTime').value = '';
+    }
+
+    function setAlert(name, time) {
+      alert(name + ' 알림이 ' + time + '으로 설정되었습니다.');
+    }
+
+    function recommendMedicine(symptom) {
+      const age = Number(document.getElementById('age').value);
+      const weight = Number(document.getElementById('weight').value);
+
+      const data = {
+        두통: {
+          medicine: '타이레놀',
+          adult: '1회 1정',
+          child: '소아용 해열제',
+          warning: '빈속 복용 주의'
+        },
+        기침: {
+          medicine: '기침 시럽',
+          adult: '1회 10ml',
+          child: '1회 5ml',
+          warning: '졸음 유발 가능'
+        },
+        감기: {
+          medicine: '종합 감기약',
+          adult: '1회 2정',
+          child: '소아용 감기약',
+          warning: '중복 복용 주의'
+        },
+        복통: {
+          medicine: '위장약',
+          adult: '1회 1정',
+          child: '소아 복용량 확인 필요',
+          warning: '복통 지속 시 병원 방문'
+        },
+        알레르기: {
+          medicine: '항히스타민제',
+          adult: '1회 1정',
+          child: '소아용 알레르기약',
+          warning: '졸음 주의'
+        }
+      };
+
+      const info = data[symptom];
+
+      let dosage = info.adult;
+
+      if (age < 15 || weight < 45) {
+        dosage = info.child;
+      }
+
+      document.getElementById('recommendBox').innerHTML = `
+        <strong>증상:</strong> ${symptom}<br>
+        <strong>추천 약:</strong> ${info.medicine} (${dosage})<br>
+        <strong>주의사항:</strong> ${info.warning}
+      `;
+    }
+  </script>
+</body>
+</html>
+```
